@@ -6,6 +6,13 @@ import redis
 import json
 
 app = Flask(__name__)
+redis_pool = redis.ConnectionPool(host='localhost', port=6379, db=0)
+
+START_DEPTH = 1
+
+
+def log(msg):
+    print "- %s" % msg
 
 
 # Web routes
@@ -20,25 +27,52 @@ def start_crawl():
     # Write job data to database
     # TODO: Execute in a transaction (?)
     for url in urls:
-        g.db.rpush('CRAWL_QUEUE', "%s$%s$%s" % (job_id, depth, url)) # Enqueue
+        to_queue = "%s$%s$%s" % (job_id, START_DEPTH, url)
+        log("Push to CRAWL_QUEUE: %s" % to_queue)
+        g.db.rpush('CRAWL_QUEUE', to_queue) # Enqueue
 
-    return "%s" % job_id
+    return json.dumps({"job_id":job_id})
 
 
 @app.route("/status/<int:job_id>/")
-def get_status():
+def get_status(job_id):
     return json.dumps({
-            "completed": g.db.get('JOB_%s_COMPLETED') or 0,
-            "inprogress": g.db.get('JOB_%s_INPROGRESS') or 0
+            "completed": g.db.get('JOB_%s_COMPLETED' % job_id) or 0,
+            "inprogress": g.db.get('JOB_%s_INPROGRESS' % job_id) or 0
         })
 
 
-@app.route("/result/<int:job_id>/")
-def get_result():
+@app.route("/results/<int:job_id>/")
+def get_results(job_id):
     return json.dumps({
-            "images":g.db.lrange("JOB_%s_RESULTS",0,-1) # All elements
+            "images": list(g.db.smembers("JOB_%s_RESULTS" % job_id))  # All elements
+            #g.db.lrange("JOB_%s_RESULTS",0,-1) # All elements
+        }, indent=4, separators=(',', ': '))
+
+
+@app.route("/queue/")
+def get_queue():
+    return json.dumps({
+            "queue": g.db.lrange("CRAWL_QUEUE",0,-1) # All elements
         })
 
+
+# Database handling
+
+def connect_db():
+    #return redis.StrictRedis(host='localhost', port=6379, db=0)
+    return redis.StrictRedis(connection_pool=redis_pool)
+
+@app.before_request
+def before_request():
+    g.db = connect_db()
+
+@app.teardown_request
+def teardown_request(exception):
+    # db = getattr(g, 'db', None)
+    # if db is not None:
+    #     db.close()
+    pass
 
 
 if __name__ == "__main__":
