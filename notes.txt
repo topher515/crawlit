@@ -1,0 +1,22 @@
+curl -X POST -d@- http://localhost:50000/ << EOF
+http://www.docker.com/
+http://www.cnn.com/
+http://www.4chan.com/
+EOF
+
+
+Questions ?
+
+# Assume list of urls is relatively short
+
+# Only follow "a href=" urls
+
+# Is status unique forever?
+# ASssume: Statuses should be unique across all connected instances of crawlit 
+
+# 
+
+# What about privacy of results/statuses etc?
+
+
+# Assume javascript enabled web crawling not important

@@ -1,0 +1,47 @@
+Write a URL crawler in Python following these instructions:
+
+- You are free to use any kind of services.
+- We expect that your app will take a list of url as input.
+- The data extracted will be a list of images (gif, jpg, png) as output
+- Your app should crawl the URLs recursively only until the second
+level (to avoid a large amount of data): Parse all URLs encountered
+and add them to the queue, only if you are on the first level of
+crawling.
+- The app will be distributed as a docker container and it has to scale by running more version of the same container in parallel.
+- Feel free to serialize the input and output if you want. The result
+don't have to be exactly like the example.
+
+Example:
+$ curl -X POST -d@- http://myapp.domain.tld/ << EOF
+http://www.docker.com/
+http://www.cnn.com/
+http://www.4chan.com/
+EOF
+
+This request triggers the crawling, the result can be 200, with a job_id in result for instance.
+
+Then, I need to see what happens on a job ID (42 in this example):
+
+$ curl -X GET http://myapp.domain.tld/status/42
+Crawling in progress on 2 URLs
+Completed: 2
+
+Feel free to format the output as you want (plain text as above or JSON):
+{completed: 2, inprogress: 2}
+
+Then I want to get the results of a job id:
+$ curl -X GET http://myapp.domain.tld/result/42
+http://www.docker.com/static/img/bodybg.png
+http://www.docker.com/static/img/logo.png
+http://www.docker.com/static/img/padlock.png
+http://www.docker.com/static/img/navbar-signup.png
+(...)
+http://docs.docker.com/_static/img/bodybg.png
+http://docs.docker.com/_static/img/docs-docker-logo.png
+http://docs.docker.com/_images/docs-mediawiki-ex.png
+http://docs.docker.com/_static/img/new-nav-section.png
+(...)
+
+Or it can be a json object with the list URL associated with the domain crawled, anyway works, no specific requirement here.
+
+- Please write few words about design decisions, shortcomings, possible improvements, etc.
