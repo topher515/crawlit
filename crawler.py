@@ -107,7 +107,7 @@ def run():
     # Once we've dequeued all the crawl tasks, subscribe to
     # the crawl queue to watch for more tasks
 
-    subscribe_channel = "__keyspace@%s__:CRAWL_QUEUE rpush"
+    subscribe_channel = "__keyspace@%s__:CRAWL_QUEUE" % REDIS_DATABASE
     pubsub = r.pubsub()
     pubsub.subscribe([subscribe_channel])
 
