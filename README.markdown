@@ -1,20 +1,25 @@
+Crawlit is a redis-backed, Docker-containerized, parallelized web crawler. 
 
+Each instance of a Crawlit container (when linked to the same Redis container)
+can work in parallel to perform crawling. As additional Crawlit containers
+are instantiated they will process crawls in parallel.
 
-## Using Crawlit 
+## Starting Crawlit 
 
     # Build the crawlit container
     docker build -t topher515/crawlit:latest .
 
     # Create a working redis container
-    docker run --name=shivering_wombat redis
+    docker run --name=short_mocha redis
 
-    # Run the crawlit instances linked to your redis container
+    # Run the crawlit container linked to your redis container
     # (Specify a known port for at least one instance of crawlit)
-    docker run --link=shivering_wombat:redis -p 0.0.0.0:49155:80 -t -i topher515/crawlit:latest
+    docker run --link=short_mocha:redis -p 0.0.0.0:49155:80 -t -i topher515/crawlit:latest
 
     # (Successive containers can have any random port)
-    docker run --link=shivering_wombat:redis -P -t -i topher515/crawlit:latest
+    docker run --link=short_mocha:redis -P -t -i topher515/crawlit:latest
 
+## Starting crawls
 
     # POST a `\n` seperated list of URLs to enqueue URLs for crawling
     curl -X POST -d@- http://localhost:49155/ << EOF
@@ -29,6 +34,8 @@
     http://www.cnn.com/
     http://www.4chan.com/
     EOF
+
+If the job starts properly you will receive a 200 response and a `job_id` 
 
 
 ## Considerations when building `Crawlit`
