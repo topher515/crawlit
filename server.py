@@ -1,21 +1,35 @@
+from __future__ import print_function
+
 from flask import Flask, request
 from flask import g # 'g' is Flask's magic 'stuff' storer http://flask.pocoo.org/docs/0.10/api/#flask.g
 
 import random
 import redis
 import json
+import os
+
+
+REDIS_DATABASE = 0
+START_DEPTH = 1
 
 app = Flask(__name__)
-redis_pool = redis.ConnectionPool(host='localhost', port=6379, db=0)
-
-START_DEPTH = 1
+redis_pool = redis.ConnectionPool(
+    host=os.environ["REDIS_PORT_6379_TCP_ADDR"], 
+    port=os.environ["REDIS_PORT_6379_TCP_PORT"],
+    db=REDIS_DATABASE)
 
 
 def log(msg):
-    print "- %s" % msg
+    print("- %s" % msg)
 
 
 # Web routes
+
+
+@app.route("/")
+def home():
+    return "Up and running!,"
+
 
 @app.route("/", methods=["POST"])
 def start_crawl():
@@ -53,7 +67,8 @@ def get_results(job_id):
 @app.route("/queue/")
 def get_queue():
     return json.dumps({
-            "queue": g.db.lrange("CRAWL_QUEUE",0,-1) # All elements
+            "queue": g.db.lrange("CRAWL_QUEUE",0,-1), # All elements
+            "queue_len":g.db.llen("CRAWL_QUEUE"),
         })
 
 
@@ -76,4 +91,4 @@ def teardown_request(exception):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=80)

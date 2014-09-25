@@ -12,7 +12,7 @@ crawling.
 don't have to be exactly like the example.
 
 Example:
-$ curl -X POST -d@- http://myapp.domain.tld/ << EOF
+$ curl -X POST -d@- http://localhost:5000/ << EOF
 http://www.docker.com/
 http://www.cnn.com/
 http://www.4chan.com/

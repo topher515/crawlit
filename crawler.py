@@ -1,16 +1,27 @@
+from __future__ import print_function
+
 import redis
 import json
 import requests
+import os
+
 from bs4 import BeautifulSoup as bsoup
-from urlparse import urljoin
+from urlparse import urljoin # 2.7
+#from urllib.parse import urljoin # 3.x
+
 
 REDIS_DATABASE = 0
 
-r = redis.StrictRedis(host='localhost', port=6379, db=REDIS_DATABASE)
+r = redis.StrictRedis(
+    host=os.environ["REDIS_PORT_6379_TCP_ADDR"], 
+    port=os.environ["REDIS_PORT_6379_TCP_PORT"],
+    db=REDIS_DATABASE)
 
 
 def log(msg):
-    print "- %s" % msg
+    print("- %s" % msg)
+def warn(msg):
+    print("-(err) %s" % msg)
 
 
 def do_crawl(job_id, depth, url):
@@ -32,10 +43,14 @@ def do_crawl(job_id, depth, url):
     try:
         # Get image urls
         page = requests.get(url).content
+
         html = bsoup(page)
 
         # Push all img srcs to database
         for img_tag in html.find_all('img'):
+            if not img_tag.get("src"):
+                # Skip images with empty src attrs
+                continue 
             r.sadd("JOB_%s_RESULTS" % job_id, img_tag["src"])
 
         # If we should go deeper, enqueue more crawls 
@@ -48,6 +63,9 @@ def do_crawl(job_id, depth, url):
                 full_url = urljoin(url, href)
                 # Enqueue a crawl for this job for this url, decrementing depth counter
                 r.rpush('CRAWL_QUEUE', "%s$%s$%s" % (job_id, depth - 1, full_url))
+    
+    except requests.exceptions.SSLError:
+        warn("SSL Error: Skipping url '%s'")
 
     finally:
         # Always decrement inprogress
@@ -74,6 +92,7 @@ def pop_next_crawl():
 
 
 def start_dequeueing():
+    log("Start dequeueing...")
     while True:
         next_crawl = pop_next_crawl()
         if not next_crawl:
@@ -87,11 +106,22 @@ def run():
     
     # Once we've dequeued all the crawl tasks, subscribe to
     # the crawl queue to watch for more tasks
-    def subscribe_handler(message):
-        if message["data"] == 'rpush':
-            start_dequeueing()
+
     subscribe_channel = "__keyspace@%s__:CRAWL_QUEUE rpush"
-    r.pubsub().subscribe(**{subscribe_channel: subscribe_handler})
+    pubsub = r.pubsub()
+    pubsub.subscribe([subscribe_channel])
+
+    log("Begin subscribe...")
+
+    for item in pubsub.listen():
+        log("Got item: %s" % item)
+        if item['type'] != 'message':
+            continue
+        log("Saw message: %s" % item)
+        if item["data"] == 'rpush':
+            start_dequeueing()
+
+
 
 
 if __name__ == "__main__":

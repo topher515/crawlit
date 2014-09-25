@@ -5,18 +5,30 @@ http://www.4chan.com/
 EOF
 
 
-Questions ?
+### Questions
 
-# Assume list of urls is relatively short
+- Assume list of urls is relatively short
 
-# Only follow "a href=" urls
+- Only follow "a href=" urls
 
-# Is status unique forever?
-# ASssume: Statuses should be unique across all connected instances of crawlit 
-
-# 
-
-# What about privacy of results/statuses etc?
+- Is status unique forever?
+- Assume: Statuses should be unique across all connected instances of crawlit 
 
 
-# Assume javascript enabled web crawling not important
+- What about privacy of results/statuses etc?
+- Assume javascript enabled web crawling not important
+
+
+### Using Crawlit 
+
+# Build my container
+docker build -t topher/crawlit:latest .
+
+# Run containers
+docker run --name=shivering_wombat redis
+
+# First container
+docker run --link=shivering_wombat:redis -p 0.0.0.0:49155:80 -t -i topher/crawlit:latest bash
+
+# Successive containers
+docker run --link=shivering_wombat:redis -P -t -i topher/crawlit:latest
