@@ -8,10 +8,6 @@
     # Create a working redis container
     docker run --name=shivering_wombat redis
 
-    # Make sure redis blah blah:
-    REDIS> config set notify-keyspace-events "Kl"
-
-
     # Run the crawlit instances linked to your redis container
     # (Specify a known port for at least one instance of crawlit)
     docker run --link=shivering_wombat:redis -p 0.0.0.0:49155:80 -t -i topher515/crawlit:latest

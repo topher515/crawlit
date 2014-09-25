@@ -17,11 +17,18 @@ r = redis.StrictRedis(
     port=os.environ["REDIS_PORT_6379_TCP_PORT"],
     db=REDIS_DATABASE)
 
+# In order to receive notifications when the CRAWL_QUEUE tasks
+# are enqueued, we must enable `notify-keyspace-events` on lists
+# (http://redis.io/topics/notifications)
+# HACK: Instead of setting the `notify-keyspace-events in the redis
+# config we just do it whenever we start a crawler. This is sorta
+# ghetto but doesn't really break anything
+r.config_set("notify-keyspace-events","Kl")
 
 def log(msg):
     print("- %s" % msg)
 def warn(msg):
-    print("-(err) %s" % msg)
+    print("-(warn) %s" % msg)
 
 
 def do_crawl(job_id, depth, url):
