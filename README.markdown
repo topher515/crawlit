@@ -55,7 +55,8 @@ If the job starts properly you will receive a 200 response and a `job_id`
 - Sometimes SSL requests break for unknown reasons
 - the # of `inprogress` crawls is sometimes `n+1` where `n` is the true number of crawls
 
-
+### Planned Improvements
+- Currently every new instance of Crawlit runs a webserver and a crawler; ideally this functionality would be separated into two complimentary pieces which could be spun up or down depending on need.
 
 
 
